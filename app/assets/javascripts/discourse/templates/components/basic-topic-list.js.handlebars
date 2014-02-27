@@ -19,9 +19,7 @@
         {{#sortable-heading sortBy="views" number=true sortOrder=sortOrder}}
           {{i18n views}}
         {{/sortable-heading}}
-        {{#sortable-heading sortBy="activity" number=true colspan="2" sortOrder=sortOrder}}
-          {{i18n activity}}
-        {{/sortable-heading}}
+        
       </tr>
 
       {{#groupedEach topic in topics}}
@@ -55,19 +53,7 @@
           </td>
 
           <td {{bind-attr class=":num :views topic.viewsHeat"}}>{{number topic.views numberKey="views_long"}}</td>
-          {{#if topic.bumped}}
-            <td class='num activity'>
-              <a href="{{unbound topic.url}}" {{{bind-attr class=":age topic.ageCold"}}} title='{{i18n first_post}}: {{{rawDate topic.created_at}}}' >{{unboundAge topic.created_at}}</a>
-            </td>
-            <td class='num activity last'>
-              <a href="{{unbound topic.lastPostUrl}}" class='age' title='{{i18n last_post}}: {{{rawDate topic.bumped_at}}}'>{{unboundAge topic.bumped_at}}</a>
-            </td>
-          {{else}}
-            <td class='num activity'>
-              <a href="{{unbound topic.url}}" class='age' title='{{i18n first_post}}: {{{rawDate topic.created_at}}}'>{{unboundAge topic.created_at}}</a>
-            </td>
-            <td class="activity"></td>
-          {{/if}}
+         
         </tr>
       {{/groupedEach}}
 
