@@ -69,10 +69,6 @@ class Topic < ActiveRecord::Base
     self.title = TextCleaner.clean_title(TextSentinel.title_sentinel(title).text) if errors[:title].empty?
   end
 
-  unless rails4?
-    serialize :meta_data, ActiveRecord::Coders::Hstore
-  end
-
   belongs_to :category
   has_many :posts
   has_many :topic_allowed_users
@@ -106,22 +102,22 @@ class Topic < ActiveRecord::Base
   attr_accessor :include_last_poster
 
   # The regular order
-  scope :topic_list_order, lambda { order('topics.bumped_at desc') }
+  scope :topic_list_order, -> { order(bumped_at: :desc) }
 
   # Return private message topics
-  scope :private_messages, lambda {
+  scope :private_messages, -> {
     where(archetype: Archetype.private_message)
   }
 
-  scope :listable_topics, lambda { where('topics.archetype <> ?', [Archetype.private_message]) }
+  scope :listable_topics, -> { where('topics.archetype <> ?', [Archetype.private_message]) }
 
-  scope :by_newest, -> { order('topics.created_at desc, topics.id desc') }
+  scope :by_newest, -> { order(created_at: :desc, id: :desc) }
 
   scope :visible, -> { where(visible: true) }
 
-  scope :created_since, lambda { |time_ago| where('created_at > ?', time_ago) }
+  scope :created_since, -> (time_ago) { where('created_at > ?', time_ago) }
 
-  scope :secured, lambda {|guardian=nil|
+  scope :secured, -> (guardian=nil) {
     ids = guardian.secure_category_ids if guardian
 
     # Query conditions
@@ -207,11 +203,11 @@ class Topic < ActiveRecord::Base
   end
 
   def self.top_viewed(max = 10)
-    Topic.listable_topics.visible.secured.order('views desc').limit(max)
+    Topic.listable_topics.visible.secured.order(views: :desc).limit(max)
   end
 
   def self.recent(max = 10)
-    Topic.listable_topics.visible.secured.order('created_at desc').limit(max)
+    Topic.listable_topics.visible.secured.order(created_at: :desc).limit(max)
   end
 
   def self.count_exceeds_minimum?
@@ -219,7 +215,7 @@ class Topic < ActiveRecord::Base
   end
 
   def best_post
-    posts.order('score desc').limit(1).first
+    posts.order(score: :desc).limit(1).first
   end
 
   # all users (in groups or directly targetted) that are going to get the pm
@@ -366,15 +362,25 @@ class Topic < ActiveRecord::Base
   end
 
   # This calculates the geometric mean of the posts and stores it with the topic
-  def self.calculate_avg_time
-    exec_sql("UPDATE topics
+  def self.calculate_avg_time(min_topic_age=nil)
+    builder = SqlBuilder.new("UPDATE topics
               SET avg_time = x.gmean
               FROM (SELECT topic_id,
                            round(exp(avg(ln(avg_time)))) AS gmean
                     FROM posts
                     WHERE avg_time > 0 AND avg_time IS NOT NULL
                     GROUP BY topic_id) AS x
-              WHERE x.topic_id = topics.id AND (topics.avg_time <> x.gmean OR topics.avg_time IS NULL)")
+              /*where*/")
+
+    builder.where("x.topic_id = topics.id AND
+                  (topics.avg_time <> x.gmean OR topics.avg_time IS NULL)")
+
+    if min_topic_age
+      builder.where("topics.bumped_at > :bumped_at",
+                   bumped_at: min_topic_age)
+    end
+
+    builder.exec
   end
 
   def changed_to_category(cat)

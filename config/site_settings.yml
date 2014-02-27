@@ -24,6 +24,9 @@ basic:
   default_locale:
     default: 'en'
     enum: 'LocaleSiteSetting'
+  allow_user_locale:
+    client: true
+    default: false
   ga_tracking_code:
     client: true
     default: ''
@@ -68,6 +71,13 @@ basic:
     default: 50
 
 users:
+  enable_sso:
+    client: true
+    default: false
+  sso_url:
+    default: ''
+  sso_secret:
+    defalt: ''
   enable_local_logins:
     client: true
     default: true
@@ -119,7 +129,7 @@ users:
   invites_shown:
     client: true
     default: 30
-  delete_user_max_age:
+  delete_user_max_post_age:
     client: true
     default: 60
   delete_all_posts_max: 15
@@ -297,7 +307,7 @@ security:
   use_https: false
   enable_escaped_fragments:
     client: true
-    default: false
+    default: true
 
 seo:
   add_rel_nofollow_to_user_content: true
@@ -323,6 +333,7 @@ spam:
   notify_mods_when_user_blocked: false
   flag_sockpuppets: true
   newuser_spam_host_threshold: 3
+  white_listed_spam_host_domains: ""
 
 rate_limits:
   unique_posts_mins:
@@ -437,4 +448,5 @@ uncategorized:
   meta_category_id:
     default: -1
     hidden: true
+  min_posts_for_search_in_topic: 10
 

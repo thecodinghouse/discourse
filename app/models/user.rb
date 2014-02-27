@@ -37,6 +37,7 @@ class User < ActiveRecord::Base
   has_one :github_user_info, dependent: :destroy
   has_one :oauth2_user_info, dependent: :destroy
   has_one :user_stat, dependent: :destroy
+  has_one :single_sign_on_record, dependent: :destroy
   belongs_to :approved_by, class_name: 'User'
 
   has_many :group_users, dependent: :destroy
@@ -355,6 +356,10 @@ class User < ActiveRecord::Base
 
   def post_count
     posts.count
+  end
+
+  def first_post
+    posts.order('created_at ASC').first
   end
 
   def flags_given_count
