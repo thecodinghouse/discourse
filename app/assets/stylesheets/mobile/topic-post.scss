@@ -18,7 +18,7 @@
 
 nav.post-controls {
   background-color: $primary_background_color;
-  padding: 0px;
+  padding: 0;
   border-right: 1px solid $primary_border_color;
   margin-top: 10px;
   button {color: lighten($primary_text_color, 35%);
@@ -43,13 +43,9 @@ span.badge-posts {
 
 button.create {
   float: right !important;
-  border: 1px solid $primary_border_color;
   margin-right: 0;
-  color: lighten($primary_text_color, 35%);
-  padding-right: 7px;
-}
- 	.like {
-    border-right: 1px solid $primary_border_color;
+  color: $primary_text_color;
+  padding-right: 7px;}
 }
 
 .create i {
@@ -58,52 +54,42 @@ button.create {
 
 
 button {
-	border: none;
-  font-size: 16px;
+  border: none;
+  font-size: 17px;
   padding: 8px 10px;
   vertical-align: top;
   background: transparent;
- 	border: 1px solid $primary_border_color;
   float: left !important;
-    &:last-of-type {
-      border-right: 1px solid $primary_border_color
+  &.hidden {
+    display: none;
+  }
+  &.like, &.edit, &.flag, &.delete, &.share, &.bookmark, &.create {
+    float: right;
+  }
+  .read-icon {
+    &:before {
+      font-family: "FontAwesome";
+      content: "\f02e";
     }
-       &:hover {
-        }
-        &:active {
-        }
-        &.hidden {
-          display: none;
-        }
-        &.like, &.edit, &.flag, &.delete, &.share, &.bookmark, &.create {
-          float: right;
-        }
-        .read-icon {
-          &:before {
-            font-family: "FontAwesome";
-            content: "\f02e";
-          }
-          &.unseen {
-            &:before {
-              content: "\f097";
-            }
-          }
-          &.last-read {
-            color: $warning_text_color;
-          }
-          &.bookmarked {
-            &:before {
-              color: $bookmarkColor;
-            }
-          }
-        }
+    &.unseen {
+      &:before {
+        content: "\f097";
       }
     }
+    &.last-read {
+      color: $warning_text_color;
+    }
+    &.bookmarked {
+      &:before {
+        color: $bookmarkColor;
+      }
+    }
+  }
+}
 
 
 
 .embedded-posts {
-
   .topic-meta-data h5 a {
     margin-left: 10px;
   }
@@ -131,7 +117,7 @@ a.star {
 }
 
 #main a.star.starred {
-	text-shadow: none !important;
+  text-shadow: none !important;
 }
 
 .topic-map {
@@ -249,8 +235,6 @@ a.star {
         border-bottom: 1px solid $primary_border_color;
 
       }
-      &.collapsed {
-      }
       .fa {
         margin: 0;
         font-size: 18px;
@@ -272,7 +256,7 @@ a.star {
     display: none;
     }
 
-   a.badge-category {
+   a.badge-category, a.badge-category-parent {
     font-size: 10px;
     }
 
@@ -415,7 +399,7 @@ iframe {
 
 #show-topic-admin {
   color: lighten($primary_text_color, 35%);
-  right: 0px;
+  right: 0;
   border-right: 0;
   padding-right: 4px;
   padding-left: 5px;

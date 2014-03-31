@@ -83,11 +83,11 @@ class TopicTrackingState
   end
 
   def self.treat_as_new_topic_clause
-    User.where("CASE
+    User.where("GREATEST(CASE
                   WHEN COALESCE(u.new_topic_duration_minutes, :default_duration) = :always THEN u.created_at
                   WHEN COALESCE(u.new_topic_duration_minutes, :default_duration) = :last_visit THEN COALESCE(u.previous_visit_at,u.created_at)
                   ELSE (:now::timestamp - INTERVAL '1 MINUTE' * COALESCE(u.new_topic_duration_minutes, :default_duration))
-               END",
+               END, us.new_since)",
                 now: DateTime.now,
                 last_visit: User::NewTopicDuration::LAST_VISIT,
                 always: User::NewTopicDuration::ALWAYS,
@@ -119,6 +119,7 @@ class TopicTrackingState
            c.name AS category_name,
            tu.notification_level
     FROM users u
+    INNER JOIN user_stats AS us ON us.user_id = u.id
     FULL OUTER JOIN topics ON 1=1
     LEFT JOIN topic_users tu ON tu.topic_id = topics.id AND tu.user_id = u.id
     LEFT JOIN categories c ON c.id = topics.category_id
@@ -133,6 +134,10 @@ class TopicTrackingState
               JOIN group_users gu ON gu.user_id = u.id AND cg.group_id = gu.group_id
               WHERE c2.read_restricted )
           )
+          AND NOT EXISTS( SELECT 1 FROM category_users cu
+                          WHERE cu.user_id = u.id AND
+                               cu.category_id = topics.category_id AND
+                               cu.notification_level = #{CategoryUser.notification_levels[:muted]})
 
 SQL
 

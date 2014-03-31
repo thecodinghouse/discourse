@@ -92,7 +92,6 @@ class Topic < ActiveRecord::Base
   has_many :topic_invites
   has_many :invites, through: :topic_invites, source: :invite
 
-  has_many :topic_revisions
   has_many :revisions, foreign_key: :topic_id, class_name: 'TopicRevision'
 
   # When we want to temporarily attach some data to a forum topic (usually before serialization)
@@ -102,22 +101,22 @@ class Topic < ActiveRecord::Base
   attr_accessor :include_last_poster
 
   # The regular order
-  scope :topic_list_order, -> { order(bumped_at: :desc) }
+  scope :topic_list_order, lambda { order('topics.bumped_at desc') }
 
   # Return private message topics
-  scope :private_messages, -> {
+  scope :private_messages, lambda {
     where(archetype: Archetype.private_message)
   }
 
-  scope :listable_topics, -> { where('topics.archetype <> ?', [Archetype.private_message]) }
+  scope :listable_topics, lambda { where('topics.archetype <> ?', [Archetype.private_message]) }
 
-  scope :by_newest, -> { order(created_at: :desc, id: :desc) }
+  scope :by_newest, -> { order('topics.created_at desc, topics.id desc') }
 
   scope :visible, -> { where(visible: true) }
 
-  scope :created_since, -> (time_ago) { where('created_at > ?', time_ago) }
+  scope :created_since, lambda { |time_ago| where('created_at > ?', time_ago) }
 
-  scope :secured, -> (guardian=nil) {
+  scope :secured, lambda {|guardian=nil|
     ids = guardian.secure_category_ids if guardian
 
     # Query conditions
@@ -189,13 +188,20 @@ class Topic < ActiveRecord::Base
 
   end
 
+  # TODO move into PostRevisor or TopicRevisor
   def save_revision
-    TopicRevision.create!(
-      user_id: acting_user.id,
-      topic_id: id,
-      number: TopicRevision.where(topic_id: id).count + 2,
-      modifications: changes.extract!(:category, :title)
-    )
+    if first_post_id = posts.where(post_number: 1).pluck(:id).first
+
+      number = PostRevision.where(post_id: first_post_id).count + 2
+      PostRevision.create!(
+        user_id: acting_user.id,
+        post_id: first_post_id,
+        number: number,
+        modifications: changes.extract!(:category_id, :title)
+      )
+
+      Post.where(id: first_post_id).update_all(version: number)
+    end
   end
 
   def should_create_new_version?
@@ -203,11 +209,11 @@ class Topic < ActiveRecord::Base
   end
 
   def self.top_viewed(max = 10)
-    Topic.listable_topics.visible.secured.order(views: :desc).limit(max)
+    Topic.listable_topics.visible.secured.order('views desc').limit(max)
   end
 
   def self.recent(max = 10)
-    Topic.listable_topics.visible.secured.order(created_at: :desc).limit(max)
+    Topic.listable_topics.visible.secured.order('created_at desc').limit(max)
   end
 
   def self.count_exceeds_minimum?
@@ -215,7 +221,7 @@ class Topic < ActiveRecord::Base
   end
 
   def best_post
-    posts.order(score: :desc).limit(1).first
+    posts.order('score desc').limit(1).first
   end
 
   # all users (in groups or directly targetted) that are going to get the pm
@@ -658,11 +664,11 @@ class Topic < ActiveRecord::Base
   #  * A timestamp with timezone in JSON format. (e.g., "2013-11-26T21:00:00.000Z")
   #  * nil, to prevent the topic from automatically closing.
   def set_auto_close(arg, by_user=nil)
-    if arg.is_a?(String) and matches = /^([\d]{1,2}):([\d]{1,2})$/.match(arg.strip)
+    if arg.is_a?(String) && matches = /^([\d]{1,2}):([\d]{1,2})$/.match(arg.strip)
       now = Time.zone.now
       self.auto_close_at = Time.zone.local(now.year, now.month, now.day, matches[1].to_i, matches[2].to_i)
       self.auto_close_at += 1.day if self.auto_close_at < now
-    elsif arg.is_a?(String) and arg.include?('-') and timestamp = Time.zone.parse(arg)
+    elsif arg.is_a?(String) && arg.include?('-') && timestamp = Time.zone.parse(arg)
       self.auto_close_at = timestamp
       self.errors.add(:auto_close_at, :invalid) if timestamp < Time.zone.now
     else
@@ -672,7 +678,7 @@ class Topic < ActiveRecord::Base
 
     unless self.auto_close_at.nil?
       self.auto_close_started_at ||= Time.zone.now
-      if by_user and by_user.staff?
+      if by_user && by_user.staff?
         self.auto_close_user = by_user
       else
         self.auto_close_user ||= (self.user.staff? ? self.user : Discourse.system_user)
@@ -693,6 +699,12 @@ class Topic < ActiveRecord::Base
 
   def acting_user=(u)
     @acting_user = u
+  end
+
+  def secure_group_ids
+    @secure_group_ids ||= if self.category && self.category.read_restricted?
+      self.category.secure_group_ids
+    end
   end
 
   private
@@ -766,11 +778,12 @@ end
 #  deleted_by_id           :integer
 #  participant_count       :integer          default(1)
 #  word_count              :integer
+#  excerpt                 :string(1000)
 #
 # Indexes
 #
-#  idx_topics_user_id_deleted_at                                (user_id)
-#  index_forum_threads_on_bumped_at                             (bumped_at)
-#  index_topics_on_deleted_at_and_visible_and_archetype_and_id  (deleted_at,visible,archetype,id)
-#  index_topics_on_id_and_deleted_at                            (id,deleted_at)
+#  idx_topics_front_page              (deleted_at,visible,archetype,category_id,id)
+#  idx_topics_user_id_deleted_at      (user_id)
+#  index_forum_threads_on_bumped_at   (bumped_at)
+#  index_topics_on_id_and_deleted_at  (id,deleted_at)
 #

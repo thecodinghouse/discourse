@@ -104,9 +104,9 @@ class ListController < ApplicationController
     discourse_expires_in 1.minute
 
     @title = @category.name
-    @link = "#{Discourse.base_url}/category/#{@category.slug}"
+    @link = "#{Discourse.base_url}/category/#{@category.slug_for_url}"
     @description = "#{I18n.t('topics_in_category', category: @category.name)} #{@category.description}"
-    @atom_link = "#{Discourse.base_url}/category/#{@category.slug}.rss"
+    @atom_link = "#{Discourse.base_url}/category/#{@category.slug_for_url}.rss"
     @topic_list = TopicQuery.new.list_new_in_category(@category)
 
     render 'list', formats: [:rss]
@@ -208,7 +208,12 @@ class ListController < ApplicationController
   end
 
   def prev_page_params(opts = nil)
-    page_params(opts).merge(page: params[:page].to_i > 1 ? (params[:page].to_i - 1) : 1)
+    pg = params[:page].to_i
+    if pg > 1
+      page_params(opts).merge(page: pg - 1)
+    else
+      page_params(opts).merge(page: nil)
+    end
   end
 
 
@@ -217,8 +222,8 @@ class ListController < ApplicationController
   def page_params(opts = nil)
     opts ||= {}
     route_params = {format: 'json'}
-    route_params[:category]        = @category.slug if @category
-    route_params[:parent_category] = @category.parent_category.slug if @category && @category.parent_category
+    route_params[:category]        = @category.slug_for_url if @category
+    route_params[:parent_category] = @category.parent_category.slug_for_url if @category && @category.parent_category
     route_params[:sort_order]      = opts[:sort_order] if opts[:sort_order].present?
     route_params[:sort_descending] = opts[:sort_descending] if opts[:sort_descending].present?
     route_params
@@ -297,7 +302,7 @@ class ListController < ApplicationController
     topic_query = TopicQuery.new(current_user, options)
 
     if current_user.present?
-      periods = [best_period_for(current_user.previous_visit_at)]
+      periods = [ListController.best_period_for(current_user.previous_visit_at)]
     else
       periods = TopTopic.periods
     end
@@ -307,7 +312,7 @@ class ListController < ApplicationController
     top
   end
 
-  def best_period_for(date)
+  def self.best_period_for(date)
     date ||= 1.year.ago
     return :yearly  if date < 180.days.ago
     return :monthly if date <  35.days.ago

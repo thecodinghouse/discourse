@@ -10,10 +10,9 @@
   td, th {padding: 8px;}
   th {border-top: 1px solid $primary_border_color;}
   td {border-bottom: 1px solid $primary_border_color; border-top: 1px solid $primary_border_color;}
-  td:last-of-type {border-bottom: none;}
   tr:hover { background-color: darken($primary_background_color, 2.5%); }
   tr.selected { background-color: lighten($tertiary_background_color, 58%); }
-  .filters input { margin-bottom: 0px; }
+  .filters input { margin-bottom: 0; }
 }
 
 .content-list li a span.count {
@@ -31,15 +30,13 @@
   .admin-contents {
     padding: 8px;
 
-    p {
-    }
-
     .ace-wrapper {
       height: 400px;
     }
   }
 
   table.report {
+    margin-top: 20px;
     tr {
       th:nth-of-type(1) {
         width: 20%;
@@ -55,7 +52,7 @@
 
       .bar {
         margin-top: 5px;
-        background-color: $emphasis_background_color;
+        background-color: $emphasis_text_color;
         display: inline-block;
         text-align: right;
         padding-right: 8px;
@@ -89,7 +86,7 @@
 
 .admin-controls {
   background-color: darken($primary_background_color, 5%);
-  padding: 10px 10px 3px 0px;
+  padding: 10px 10px 3px 0;
   height: 35px;
   .nav.nav-pills {
     li.active {
@@ -112,7 +109,7 @@
   }
   button {
     margin-right: 5px;
-    
+
   }
   input[type=text] {
     display: inline-block;
@@ -200,7 +197,9 @@
 
     .desc {
       padding-top: 3px;
-      color: darken($secondary_text_color, 40%);
+      color: $secondary_text_color;
+      font-size: 80%;
+      line-height: 1.4em;
     }
 
     h3 {
@@ -226,7 +225,7 @@ section.details {
     background-color: lighten($secondary_background_color, 50%);
     color: $tertiary_text_color;
     padding: 0 10px;
-    margin: 0px 0 5px 0;
+    margin: 0 0 5px 0;
   }
 }
 
@@ -280,11 +279,54 @@ section.details {
   }
 
   .controls {
-    width: 600px;
+    width: 480px;
     float: left;
     margin-left: 12px;
     .btn {
       margin-right: 5px;
+    }
+  }
+}
+
+// Badges area
+.badges {
+  .content-list ul {
+    margin-bottom: 10px;
+  }
+
+  .current-badge {
+    margin: 20px;
+  }
+
+  .form-horizontal {
+    label {
+      font-weight: bold;
+    }
+    & > div {
+      margin-top: 10px;
+    }
+    .delete-link {
+      margin-left: 15px;
+      margin-top: 5px;
+    }
+
+    input, textarea, select {
+      width: 350px;
+    }
+
+    textarea {
+      height: 200px;
+    }
+  }
+
+  .buttons {
+    float: left;
+    width: 200px;
+    .saving {
+      padding: 5px 0 0 0;
+      margin-left: 10px;
+      width: 80px;
+      color: $secondary_text_color;
     }
   }
 }
@@ -543,7 +585,7 @@ table.api-keys {
 
     .look-here {
       float: left;
-      margin: 20px 20px 0 20px;
+      margin: 20px 10px 0 10px;
 
       .fa {
         font-size: 32px;
@@ -554,7 +596,7 @@ table.api-keys {
 
     .problem-messages {
       float: left;
-      width: 355px;
+      width: 395px;
       a {
         text-decoration: underline;
       }
@@ -563,7 +605,10 @@ table.api-keys {
       }
       .btn {
         background-color: lighten($secondary_background_color, 60%);
-    }
+      }
+      ul {
+        margin-left: 0;
+      }
   }
 }
 
@@ -582,9 +627,9 @@ table.api-keys {
   }
 
   &.trust-levels {
-    margin-bottom: 0px;
+    margin-bottom: 0;
     table {
-      margin-bottom: 0px;
+      margin-bottom: 0;
     }
     td.value {
       width: 45px;
@@ -887,7 +932,7 @@ table.api-keys {
     background-color: lighten($secondary_background_color, 60%);
     padding: 3px 10px;
     border-radius: 3px;
-    
+
     color: $primary_text_color;
     &:hover {
       color: $primary_text_color;
@@ -920,7 +965,7 @@ table.api-keys {
 }
 
 .staff-actions, .screened-emails, .screened-urls, .screened-ip-addresses {
-  
+
   border-bottom: dotted 1px $primary_border_color;
 
   .heading-container {
@@ -937,9 +982,6 @@ table.api-keys {
     vertical-align: top;
     overflow-y: auto;
     overflow-x: hidden;
-  }
-  .col.first {
-    
   }
 
   .ember-list-item-view {
@@ -1005,4 +1047,8 @@ button.ru {
 
 .is-uploading:hover .ru-progress {
   background: rgba(200, 0, 0, 0.3);
+}
+
+.invisible {
+  visibility: hidden;
 }

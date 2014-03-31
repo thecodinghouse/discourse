@@ -52,11 +52,6 @@ Discourse.Composer = Discourse.Model.extend({
   canEditTitle: Em.computed.or('creatingTopic', 'creatingPrivateMessage', 'editingFirstPost'),
   canCategorize: Em.computed.and('canEditTitle', 'notCreatingPrivateMessage'),
 
-  showAdminOptions: function() {
-    if (this.get('creatingTopic') && Discourse.User.currentProp('staff')) return true;
-    return false;
-  }.property('canEditTitle'),
-
   // Determine the appropriate title for this action
   actionTitle: function() {
     var topic = this.get('topic');
@@ -126,14 +121,10 @@ Discourse.Composer = Discourse.Model.extend({
     // reply is always required
     if (this.get('missingReplyCharacters') > 0) return true;
 
-    if (this.get('canCategorize') &&
+    return this.get('canCategorize') &&
         !Discourse.SiteSettings.allow_uncategorized_topics &&
         !this.get('categoryId') &&
-        !Discourse.User.currentProp('staff')) {
-      return true;
-    }
-
-    return false;
+        !Discourse.User.currentProp('staff');
   }.property('loading', 'canEditTitle', 'titleLength', 'targetUsernames', 'replyLength', 'categoryId', 'missingReplyCharacters'),
 
   /**
@@ -524,10 +515,16 @@ Discourse.Composer = Discourse.Model.extend({
           postStream.undoPost(createdPost);
         }
         composer.set('composeState', OPEN);
+
         // TODO extract error handling code
         var parsedError;
         try {
-          parsedError = $.parseJSON(error.responseText).errors[0];
+          var parsedJSON = $.parseJSON(error.responseText);
+          if (parsedJSON.errors) {
+            parsedError = parsedJSON.errors[0];
+          } else if (parsedJSON.failed) {
+            parsedError = parsedJSON.message;
+          }
         }
         catch(ex) {
           parsedError = "Unknown error saving post, try again. Error: " + error.status + " " + error.statusText;
